@@ -12,10 +12,18 @@
 #include "current/bricks/util/random.h"
 #include "current/bricks/util/singleton.h"
 
-#if defined(_DEBUG) || !defined(NDEBUG)
-static constexpr bool ndebug = false;
-#else
+#ifdef CURRENT_WINDOWS
+#ifndef _DEBUG
 static constexpr bool ndebug = true;
+#else
+static constexpr bool ndebug = false;
+#endif
+#else
+#ifdef NDEBUG
+static constexpr bool ndebug = true;
+#else
+static constexpr bool ndebug = false;
+#endif
 #endif
 
 DEFINE_uint64(m, 1000, "The size of each block to `base64-{encode/decode}`, in bytes.");
