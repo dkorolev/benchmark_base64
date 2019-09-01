@@ -31,6 +31,33 @@ DEFINE_uint64(n, 0, "The number of blocks to benchmark on, keep at zero to deriv
 DEFINE_double(gb, ndebug ? 0.1 : 0.01, "If `--n` is not set, the number of (unencoded) gigabytes to run the test on.");
 DEFINE_bool(log, false, "Output extra details, to stderr. By default, MB/s will be printed, to stdout.");
 
+template <bool, typename LHS, typename RHS>
+struct EXPECT_EQ_IMPL final {
+  static void DoIt(LHS&& lhs, RHS&& rhs) {
+    if (lhs != rhs) {
+      std::cerr << "\b\b\bFail.\nDetails: '" << lhs << "' != '" << rhs << "'.\n";
+      std::exit(-1);
+    }
+  }
+};
+
+template <typename LHS, typename RHS>
+struct EXPECT_EQ_IMPL<true, LHS, RHS> final {
+  static void DoIt(std::string const& lhs, std::string const& rhs) {
+    if (lhs != rhs) {
+      std::cerr << "\b\b\bFail.\nDetails: '" << lhs << "' != '" << rhs << "'.\n";
+      std::exit(-1);
+    }
+  }
+};
+
+template <typename LHS, typename RHS>
+inline void EXPECT_EQ(LHS&& lhs, RHS&& rhs) {
+  EXPECT_EQ_IMPL<current::strings::is_string_type<LHS>::value || current::strings::is_string_type<RHS>::value,
+                 current::decay<LHS>,
+                 current::decay<RHS>>::DoIt(std::forward<LHS>(lhs), std::forward<RHS>(rhs));
+}
+
 namespace implementations {
 
 #define BASE64_PERFTEST_EXPAND_MACRO_IMPL(x) x
@@ -45,14 +72,19 @@ struct Code;
 // The canonical implementation keeps a member `std::string tmp` as the stateful storage.
 // This is to enable performance tests against other implementations, that are not using `std::string`-s.
 
+struct HasInit {
+  virtual ~HasInit() = default;
+  virtual void Init() const {}
+};
+
 #define IMPLEMENTATION(name)                                                                     \
   static constexpr int index_##name = BASE64_PERFTEST_EXPAND_MACRO(__COUNTER__) - counter_begin; \
   template <>                                                                                    \
-  struct Name<index_##name> {                                                                    \
+  struct Name<index_##name> final {                                                              \
     static char const* HumanReadableName() { return #name; }                                     \
   };                                                                                             \
   template <>                                                                                    \
-  struct Code<index_##name>
+  struct Code<index_##name> final : HasInit
 
 #include "implementations.h"
 
@@ -63,17 +95,12 @@ static constexpr int total = BASE64_PERFTEST_EXPAND_MACRO(__COUNTER__) - counter
 template <class IMPL>
 void Run(size_t n, std::vector<std::string> const& input, std::vector<std::string> const& golden, size_t total_bytes) {
   IMPL impl;
+  impl.Init();
 
   if (FLAGS_log) {
     std::cerr << "Testing correctness: ...";
   }
 
-  auto const EXPECT_EQ = [](std::string const& lhs, std::string const& rhs) {
-    if (lhs != rhs) {
-      std::cerr << "\b\b\bFail.\nDetails: '" << lhs << "' != '" << rhs << "'.\n";
-      std::exit(-1);
-    }
-  };
   auto const Base64Encode = [&impl](std::string const& original) { return impl.DoEncode(original); };
   auto const Base64Decode = [&impl](std::string const& encoded) { return impl.DoDecode(encoded); };
 
@@ -157,7 +184,7 @@ void Run(size_t n, std::vector<std::string> const& input, std::vector<std::strin
   }
 }
 
-struct Registry {
+struct Registry final {
   std::vector<std::string> names;
   std::map<
       std::string,

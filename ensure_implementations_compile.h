@@ -11,5 +11,10 @@
 #include "current/bricks/util/singleton.h"
 
 #ifndef IMPLEMENTATION
-#define IMPLEMENTATION(x) struct unused_implementation_##x
+struct HasInitStub {
+  virtual ~HasInitStub() = default;
+  virtual void Init() const {}
+};
+#define EXPECT_EQ(...)
+#define IMPLEMENTATION(x) struct unused_implementation_##x final : HasInitStub
 #endif

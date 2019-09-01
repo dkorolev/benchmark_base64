@@ -3,6 +3,15 @@
 #include "ensure_implementations_compile.h"
 
 IMPLEMENTATION(vanilla) {
+  void Init() const override {
+    EXPECT_EQ(4, 2 + 2);
+    std::string const foo = "foo";
+    std::string const bar = "bar";
+    EXPECT_EQ("foobar", foo + bar);
+    // EXPECT_EQ(5, 2 * 2);  // This would fail.
+    // EXPECT_EQ("foo", "bar");  // This would fail.
+  }
+
   std::string placeholder;
   current::strings::Chunk DoEncode(current::strings::Chunk chunk) {
     placeholder = current::Base64Encode(chunk.c_str(), chunk.length());
