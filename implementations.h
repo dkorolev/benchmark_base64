@@ -4,11 +4,23 @@
 
 IMPLEMENTATION(vanilla) {
   std::string placeholder;
+  current::strings::Chunk DoEncode(current::strings::Chunk chunk) {
+    placeholder = current::Base64Encode(chunk.c_str(), chunk.length());
+    return placeholder;
+  }
+  current::strings::Chunk DoDecode(current::strings::Chunk chunk) {
+    placeholder = current::Base64Decode(chunk.c_str(), chunk.length());
+    return placeholder;
+  }
+};
+
+IMPLEMENTATION(vanilla_nocopy) {
+  std::string placeholder;
   current::strings::Chunk DoEncode(current::strings::Chunk c) { return current::ZeroCopyBase64Encode(c, placeholder); }
   current::strings::Chunk DoDecode(current::strings::Chunk c) { return current::ZeroCopyBase64Decode(c, placeholder); }
 };
 
-IMPLEMENTATION(fast) {
+IMPLEMENTATION(optimized) {
   std::string placeholder;
   current::strings::Chunk DoEncode(current::strings::Chunk input) {
     const char* map = current::base64::encode_map;

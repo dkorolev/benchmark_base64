@@ -70,13 +70,7 @@ void Run(size_t n, std::vector<std::string> const& input, std::vector<std::strin
 
   auto const EXPECT_EQ = [](std::string const& lhs, std::string const& rhs) {
     if (lhs != rhs) {
-      std::cerr << "\b\b\bFail: '\n" << lhs << "' != '" << rhs << "'.\n";
-      for (size_t i = 0; i < lhs.length(); ++i) {
-        std::cerr << "lhs[" << i << "] = " << int(lhs[i]) << std::endl;
-      }
-      for (size_t i = 0; i < rhs.length(); ++i) {
-        std::cerr << "rhs[" << i << "] = " << int(rhs[i]) << std::endl;
-      }
+      std::cerr << "\b\b\bFail.\nDetails: '" << lhs << "' != '" << rhs << "'.\n";
       std::exit(-1);
     }
   };
