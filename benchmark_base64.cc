@@ -29,6 +29,7 @@ static constexpr bool ndebug = false;
 DEFINE_uint64(m, 1000, "The size of each block to `base64-{encode/decode}`, in bytes.");
 DEFINE_uint64(n, 0, "The number of blocks to benchmark on, keep at zero to derive it from `--m` and `--gb` instead.");
 DEFINE_double(gb, ndebug ? 0.1 : 0.01, "If `--n` is not set, the number of (unencoded) gigabytes to run the test on.");
+DEFINE_bool(ascii, false, "Set to true to only use ASCII characters (32 .. 127) in the test strings.");
 DEFINE_bool(log, false, "Output extra details, to stderr. By default, MB/s will be printed, to stdout.");
 
 template <bool, typename LHS, typename RHS>
@@ -249,7 +250,11 @@ int main(int argc, char** argv) {
   for (std::string& s : input) {
     s.resize(m);
     for (char& c : s) {
-      c = static_cast<char>(current::random::RandomInt(32, 127));
+      if (FLAGS_ascii) {
+        c = static_cast<char>(current::random::RandomInt(32, 127));
+      } else {
+        c = static_cast<char>(current::random::RandomInt(0, 255));
+      }
     }
   }
 
